@@ -5,8 +5,9 @@
 + [What is Docker](https://www.youtube.com/watch?v=YFl2mCHdv24)
 + [Docker compose](https://www.youtube.com/watch?v=Qw9zlE3t8Ko)
 + [Learn Docker](https://www.youtube.com/watch?v=wCTTHhehJbU)
-+ [Installation for Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
++ [Installation on Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 + [Postgres](https://hub.docker.com/_/postgres/)
++ Postgres + Docker [video 1](https://www.youtube.com/watch?v=AVGjN28E760), [video 2](https://www.youtube.com/watch?v=q5J3rtAGGNU), [video 3](https://www.youtube.com/watch?v=A8dErdDMqb0), [video 3](https://www.youtube.com/watch?v=aHbE3pTyG-Q)
 
 ### Commands
 Install *docker-compose*:
@@ -29,3 +30,9 @@ Stopping background Docker process:
 
     sudo docker-compose stop
 
+### Additional
+[MySQL workbench](https://linode.com/docs/databases/mysql/install-and-configure-mysql-workbench-on-ubuntu/)
+[Database visualiser](https://sqlectron.github.io/)
+[SQL Tutorial](https://www.w3schools.com/sql/)
+[Basics of SQL (video)](https://www.youtube.com/watch?v=bEtnYWuo2Bw)
+[DROP TABLE](https://www.w3schools.com/sql/sql_drop_table.asp)
