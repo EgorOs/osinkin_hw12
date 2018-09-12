@@ -7,7 +7,7 @@
 + [Learn Docker](https://www.youtube.com/watch?v=wCTTHhehJbU)
 + [Installation on Ubuntu](https://docs.docker.com/install/linux/docker-ce/ubuntu/)
 + [Postgres](https://hub.docker.com/_/postgres/)
-+ Postgres + Docker [video 1](https://www.youtube.com/watch?v=AVGjN28E760), [video 2](https://www.youtube.com/watch?v=q5J3rtAGGNU), [video 3](https://www.youtube.com/watch?v=A8dErdDMqb0), [video 3](https://www.youtube.com/watch?v=aHbE3pTyG-Q)
++ Postgres + Docker [video 1](https://www.youtube.com/watch?v=AVGjN28E760), [video 2](https://www.youtube.com/watch?v=q5J3rtAGGNU), [video 3](https://www.youtube.com/watch?v=A8dErdDMqb0), [video 4](https://www.youtube.com/watch?v=aHbE3pTyG-Q)
 
 ### Commands
 Install *docker-compose*:
