@@ -39,12 +39,12 @@ Stopping background Docker process:
 
 ### Known issues
 
-######[Log-in problem](https://stackoverflow.com/questions/29580798/docker-compose-environment-variables)
+###### [Log-in problem](https://stackoverflow.com/questions/29580798/docker-compose-environment-variables)
 
     docker-compose rm
     docker-compose up
 
-######[Initialize with .sql](https://gist.github.com/onjin/2dd3cc52ef79069de1faa2dfd456c945)
+###### [Initialize with .sql](https://gist.github.com/onjin/2dd3cc52ef79069de1faa2dfd456c945)
 
     volumes:
       - ./data/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
