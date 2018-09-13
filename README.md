@@ -31,8 +31,20 @@ Stopping background Docker process:
     sudo docker-compose stop
 
 ### Additional
-[MySQL workbench](https://linode.com/docs/databases/mysql/install-and-configure-mysql-workbench-on-ubuntu/)
-[Database visualiser](https://sqlectron.github.io/)
-[SQL Tutorial](https://www.w3schools.com/sql/)
-[Basics of SQL (video)](https://www.youtube.com/watch?v=bEtnYWuo2Bw)
-[DROP TABLE](https://www.w3schools.com/sql/sql_drop_table.asp)
++ [MySQL workbench](https://linode.com/docs/databases/mysql/install-and-configure-mysql-workbench-on-ubuntu/)
++ [Database visualiser](https://sqlectron.github.io/)
++ [SQL Tutorial](https://www.w3schools.com/sql/)
++ [Basics of SQL (video)](https://www.youtube.com/watch?v=bEtnYWuo2Bw)
++ [DROP TABLE](https://www.w3schools.com/sql/sql_drop_table.asp)
+
+### Known issues
+
+######[Log-in problem](https://stackoverflow.com/questions/29580798/docker-compose-environment-variables)
+
+    docker-compose rm
+    docker-compose up
+
+######[Initialize with .sql](https://gist.github.com/onjin/2dd3cc52ef79069de1faa2dfd456c945)
+
+    volumes:
+      - ./data/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
