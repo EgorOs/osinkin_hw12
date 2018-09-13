@@ -1,0 +1,14 @@
+ALTER TABLE employee
+    DROP COLUMN employee_city;
+
+ALTER TABLE employee
+    ADD employee_city VARCHAR(255) NOT NULL;
+
+-- DROP TABLE city;
+-- Drop cascade to drop linked objects
+DROP TABLE city CASCADE;
+
+UPDATE db_scheme_version
+SET db_version = '1.4', upgraded_on = NOW()
+
+

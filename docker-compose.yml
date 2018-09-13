@@ -12,6 +12,10 @@ services:
       POSTGRES_DB: 'database'
     volumes:
       - ./data/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+      - ./data/02-create-city.sql:/docker-entrypoint-initdb.d/02-create-city.sql
+      - ./data/03-create_department.sql:/docker-entrypoint-initdb.d/03-create_department.sql
+      - ./data/04-create-employee.sql:/docker-entrypoint-initdb.d/04-create-employee.sql
+      - ./data/05-drop-city.sql:/docker-entrypoint-initdb.d/05-drop-city.sql
   # adminer:
   #   image: adminer
   #   restart: always
