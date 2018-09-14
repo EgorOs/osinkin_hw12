@@ -34,14 +34,14 @@ Stopping background Docker process:
 1. Get [Sqlectron](https://sqlectron.github.io/)
 2. Configure user data and ports [for example](https://github.com/EgorOs/osinkin_hw12/blob/master/docker-compose.yml#L7):
 
-    '''    
+    ```    
     ports: 
-      \- "5431:5432"
+      - "5431:5432"
     environment:
       POSTGRES_USER: "root"
       POSTGRES_PASSWORD: "password"
       POSTGRES_DB: "database"
-    '''
+    ```
 3. Run Sqlectron, add new connection
     ![Connection setup](https://raw.githubusercontent.com/EgorOs/osinkin_hw12/master/imgs/connection_setup.png)
 
