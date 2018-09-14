@@ -30,9 +30,25 @@ Stopping background Docker process:
 
     sudo docker-compose stop
 
+### Setting up database visualiser
+1. Get [Sqlectron](https://sqlectron.github.io/)
+2. Configure user data and ports [for example](https://github.com/EgorOs/osinkin_hw12/blob/master/docker-compose.yml#L7):
+
+    '''    
+    ports: 
+      - '5431:5432'
+    environment:
+      POSTGRES_USER: 'root'
+      POSTGRES_PASSWORD: 'password'
+      POSTGRES_DB: 'database'
+    '''
+3. Run Sqlectron, add new connection
+    ![Connection setup](https://raw.githubusercontent.com/EgorOs/osinkin_hw12/master/imgs/connection_setup.png)
+
+4. Connect to database, all tables will be stored in database/tables/public, if you wish to initialize with .sql check out **known issues** section.
+
 ### Additional
 + [MySQL workbench](https://linode.com/docs/databases/mysql/install-and-configure-mysql-workbench-on-ubuntu/)
-+ [Database visualiser](https://sqlectron.github.io/)
 + [SQL Tutorial](https://www.w3schools.com/sql/)
 + [Basics of SQL (video)](https://www.youtube.com/watch?v=bEtnYWuo2Bw)
 + [DROP TABLE](https://www.w3schools.com/sql/sql_drop_table.asp)
