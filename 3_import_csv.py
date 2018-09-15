@@ -4,61 +4,93 @@ import psycopg2
 import gzip
 import csv
 
-conn = psycopg2.connect(host='localhost', port='5431', user='root', password='password', dbname='homework')
-cursor = conn.cursor()
-# sql =   """
-#         CREATE TABLE city (
-#         city_id SERIAL NOT NULL PRIMARY KEY,
-#         city_name VARCHAR(255) NOT NULL UNIQUE
-#         );
-#         """
-# cursor.execute(sql)
-# conn.commit()
-bosses_ids = sorted({r.split(',')[-2] for r in gzip.open('csv/EMPLOYEE.csv.gz', mode='rt')})
-print(len(bosses_ids))
+
+def load_deps(dest: str, connection_params: dict) -> dict:
+    """Fills the department table"""
+    with psycopg2.connect(**connection_params) as conn, open(dest, mode='rt') as f:
+        cursor = conn.cursor()
+        idx = 1
+        dep_2_id = {}
+        # skip header line
+        next(f)
+        for row in f:
+            dep, city = row.split(',')
+            sql = """INSERT INTO department(department_id, department_name, department_city) VALUES (%s, '%s', '%s');"""%(idx, dep, city)
+            dep_2_id[dep] = idx
+            cursor.execute(sql)
+            conn.commit()
+            idx += 1
+    return dep_2_id
 
 
-with open('csv/DEPTS.csv', mode='rt') as f:
-    # skip header line
-    next(f)
-    ctr = 1
-    dep_2_id = {}
-    for row in f:
-        dep, city = row.split(',')
-        sql = """INSERT INTO department(department_id, department_name, department_city) VALUES (%s, '%s', '%s');"""%(ctr, dep, city)
-        dep_2_id[dep] = ctr
+def load_employees(dest: str, nchunks: int, connection_params: dict, dep_2_id: dict):
+    """Fills the employee table, nchunks parameter defines the number of chunks
+    employees will be separated into, thus the number of SQL queries"""
+    with psycopg2.connect(**connection_params) as conn, gzip.open(dest, mode='rt') as f:
+        cursor = conn.cursor()
+
+        # Load bosses first to avoid crushes on loading subordinates
+        bosses_ids = set()
+
+        sql_common = """INSERT INTO employee(employee_id, first_name, last_name, employee_department, employee_city, boss, salary) VALUES """
+        sql_values = ''
+        next(f)
+        n_subordinates = 0
+        for row in f:
+            em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
+            if em_id == boss_id or boss_id == '':
+                sql_values += """, (%s, '%s', '%s', %s, '%s', %s, %s)"""%(em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
+                bosses_ids.add(em_id)
+            else:
+                n_subordinates += 1
+
+        # remove extra comma
+        sql = sql_common + sql_values[1::]
         cursor.execute(sql)
         conn.commit()
-        ctr += 1
 
-
-
-with gzip.open('csv/EMPLOYEE.csv.gz', mode='rt') as f:
-    # get first row
-    em_id, fn, ln, depart, city, boss, salary = next(f).split(',')
-    sql_insert = """INSERT INTO employee(employee_id, first_name, last_name, employee_department, employee_city, boss, salary) VALUES """
-    sql_values = ''
-    ctr = 1
-    for row in f:
-        em_id, fn, ln, dep, city, boss, salary = row.split(',')
-        # print('here')
-        if em_id in bosses_ids:
-            sql_values += """(%s, '%s', '%s', %s, '%s', %s, %s)"""%(em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
-            if ctr % 500 == 0:
-                cursor.execute(sql_insert + sql_values)
-                conn.commit()
-                sql_values = ''
-                print(500)
+    with psycopg2.connect(**connection_params) as conn, gzip.open(dest, mode='rt') as f:
+        cursor = conn.cursor()
+        # Separate subordinates in chunks and load them
+        chunk_size = n_subordinates // nchunks
+        current_chunk_size = 0
+        sql_common = """INSERT INTO employee(employee_id, first_name, last_name, employee_department, employee_city, boss, salary) VALUES """
+        sql_values = ''
+        next(f)
+        for row in f:
+            em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
+            if current_chunk_size < chunk_size:
+                if em_id not in bosses_ids:
+                    sql_values += """, (%s, '%s', '%s', %s, '%s', %s, %s)"""%(em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
+                    current_chunk_size += 1
             else:
-                sql_values += ',' 
-        ctr += 1     
-        # print(sql_insert, sql_values)
-    cursor.execute(sql_insert + sql_values)
-    conn.commit()
-    print('ok')
+                sql = sql_common + sql_values[1::]
+                cursor.execute(sql)
+                conn.commit()
+                sql_values = """, (%s, '%s', '%s', %s, '%s', %s, %s)"""%(em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
+                current_chunk_size = 1
+                print('chunk processed')
+
+        # Commit last unfilled chunk if it exists
+        if current_chunk_size != 0:
+            sql = sql_common + sql_values[1::]
+            cursor.execute(sql)
+            conn.commit()
 
 
-conn.close()
+#903,160
+#903196 - true val
+
+connection_params = {
+    'host':'localhost', 
+    'port':'5431', 
+    'user':'root', 
+    'password':'password', 
+    'dbname':'homework'
+}
+
+dep_2_id = load_deps('csv/DEPTS.csv', connection_params)
+load_employees('csv/EMPLOYEE.csv.gz', 5, connection_params, dep_2_id)
 
 # wierd stuff in database
 # Not none check
