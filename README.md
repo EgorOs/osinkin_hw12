@@ -31,10 +31,14 @@ Stopping background Docker process:
     sudo docker-compose stop
 
 ### Setting up database visualiser
-1. Get [Sqlectron](https://sqlectron.github.io/)
+1. Get [DBeaver](https://dbeaver.io/download/) or [Sqlectron](https://sqlectron.github.io/)
+    ```
+    # Download .deb package and run
+    sudo dpkg -i <filename>.deb 
+    ```
 2. Configure user data and ports [for example](https://github.com/EgorOs/osinkin_hw12/blob/master/docker-compose.yml#L7):
 
-    ```    
+    ```
     ports: 
       - "5431:5432"
     environment:
@@ -42,16 +46,15 @@ Stopping background Docker process:
       POSTGRES_PASSWORD: "password"
       POSTGRES_DB: "database"
     ```
-3. Run Sqlectron, add new connection
+3. Run DBeaver or Sqlectron, add new connection, accourding to your docker-compose file
     ![Connection setup](https://raw.githubusercontent.com/EgorOs/osinkin_hw12/master/imgs/connection_setup.png)
 
-4. Connect to database, all tables will be stored in database/tables/public, if you wish to initialize with .sql check out [this section](https://github.com/EgorOs/osinkin_hw12#initialize-with-sql).
+4. Run the docker container, connect to database, all tables will be stored in tables/public, if you wish to initialize with .sql check out [this section](https://github.com/EgorOs/osinkin_hw12#initialize-with-sql).
 
 ### Additional
 + [MySQL workbench](https://linode.com/docs/databases/mysql/install-and-configure-mysql-workbench-on-ubuntu/)
-+ [SQL Tutorial](https://www.w3schools.com/sql/)
++ [SQL Tutorials](https://www.w3schools.com/sql/)
 + [Basics of SQL (video)](https://www.youtube.com/watch?v=bEtnYWuo2Bw)
-+ [DROP TABLE](https://www.w3schools.com/sql/sql_drop_table.asp)
 
 ### Known issues
 
