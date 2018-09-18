@@ -136,6 +136,7 @@ connection_params = {
 }
 
 
+
 result_queue = {}
 worker_1 = DatabaseWorker('hw1', frq_fname_lname, result_queue, connection_params)
 worker_2 = DatabaseWorker('hw2', work_outside_dep_city, result_queue, connection_params)

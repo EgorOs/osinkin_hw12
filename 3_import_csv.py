@@ -39,12 +39,13 @@ def create_temp_csv(from_dest, name, dep_2_id):
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
             if em_id == boss_id and boss_id != '':
-                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
+                writer.writerow([em_id, fn, ln, dep_2_id[dep],
+                                 int(boss_id), int(salary), city])
                 bosses_added.add(em_id)
             elif boss_id == '':
-                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(em_id), int(salary), city])
+                writer.writerow([em_id, fn, ln, dep_2_id[dep],
+                                 int(em_id), int(salary), city])
                 bosses_added.add(em_id)
-
 
     with gzip.open(from_dest, mode='rt') as f, open(name, mode='a', newline='') as f_out:
 
@@ -54,7 +55,8 @@ def create_temp_csv(from_dest, name, dep_2_id):
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
             if em_id in bosses_req:
-                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
+                writer.writerow([em_id, fn, ln, dep_2_id[dep],
+                                 int(boss_id), int(salary), city])
 
     with gzip.open(from_dest, mode='rt') as f, open(name, mode='a', newline='') as f_out:
 
@@ -63,7 +65,9 @@ def create_temp_csv(from_dest, name, dep_2_id):
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
             if em_id not in bosses_ids and boss_id != '':
-                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
+                writer.writerow([em_id, fn, ln, dep_2_id[dep],
+                                 int(boss_id), int(salary), city])
+
 
 connection_params = {
     'host': 'localhost',
@@ -72,7 +76,6 @@ connection_params = {
     'password': 'password',
     'dbname': 'homework'
 }
-
 
 dep_2_id = load_deps('csv/DEPTS.csv', connection_params)
 temp_csv_name = 'tmp.csv'
