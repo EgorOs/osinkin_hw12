@@ -3,6 +3,7 @@
 import psycopg2
 import gzip
 import csv
+from time import time
 
 
 def load_deps(dest: str, connection_params: dict) -> dict:
@@ -113,4 +114,72 @@ connection_params = {
 }
 
 dep_2_id = load_deps('csv/DEPTS.csv', connection_params)
-load_employees('csv/EMPLOYEE.csv.gz', 200000, connection_params, dep_2_id)
+# load_employees('csv/EMPLOYEE.csv.gz', 200000, connection_params, dep_2_id)
+
+
+# https://www.dataquest.io/blog/loading-data-into-postgres/
+# https://stackoverflow.com/questions/30050097/copy-data-from-csv-to-postgresql-using-python
+with psycopg2.connect(**connection_params) as conn, gzip.open('csv/EMPLOYEE.csv.gz', mode='rt') as f:
+    cursor = conn.cursor()
+    cursor.execute("""
+CREATE TABLE test(
+    id integer PRIMARY KEY,
+    fname varchar,
+    lname varchar,
+    emp_dep text,
+    emp_city varchar,
+    boss text,
+    salary integer
+)
+""")
+
+    conn.commit()
+    next(f)
+    cursor.copy_from(f, 'test', sep=',')
+    conn.commit()
+
+    sql = """
+UPDATE test
+set boss = case when boss = '' then cast(id as text) else boss end
+where boss = '' """
+    t_start = time()
+    cursor.execute(sql)
+    conn.commit()
+    print('Filled missing values in: %s sec' %(time()-t_start))
+
+    sql = """
+UPDATE test
+set emp_dep = (select department_id from department where emp_dep = department.department_name)"""
+    t_start = time()
+    cursor.execute(sql)
+    conn.commit()
+    print('Numbered departments in: %s sec' %(time()-t_start))
+
+    sql = """
+INSERT into employee(employee_id, first_name, last_name, employee_department, boss, salary, employee_city)
+select id, fname, lname, cast(emp_dep as integer), cast(boss as integer) as boss, salary, emp_city
+from test
+where id in (select cast(boss as integer) from test)"""
+    t_start = time()
+    cursor.execute(sql)
+    conn.commit()
+    print('Inserted bosses in: %s sec' %(time()-t_start))
+
+    sql = """
+    DELETE
+from test
+where id in (select cast(boss as integer) from test)"""
+    t_start = time()
+    cursor.execute(sql)
+    conn.commit()
+    print('Removed bosses from pool in: %s sec' %(time()-t_start))
+
+    sql = """
+INSERT into employee(employee_id, first_name, last_name, employee_department, boss, salary, employee_city)
+SELECT id, fname, lname, cast(emp_dep as integer), cast(boss as integer) as boss, salary, emp_city
+from test
+"""
+    t_start = time()
+    cursor.execute(sql)
+    conn.commit()
+    print('Inserted the rest of employees: %s sec' %(time()-t_start))
