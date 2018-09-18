@@ -77,6 +77,7 @@ connection_params = {
     'dbname': 'homework'
 }
 
+init_time = time()
 dep_2_id = load_deps('csv/DEPTS.csv', connection_params)
 temp_csv_name = 'tmp.csv'
 
@@ -88,3 +89,4 @@ with psycopg2.connect(**connection_params) as conn, open('tmp.csv', mode='rt') a
     conn.commit()
 
 os.remove(temp_csv_name)
+print('Processing took %s sec' % (time() - init_time))

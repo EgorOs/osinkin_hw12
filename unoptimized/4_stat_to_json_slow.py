@@ -2,9 +2,7 @@
 
 import psycopg2
 import json
-from threading import Thread, Lock
-from time import time, sleep
-
+from time import time
 
 def frq_fname_lname(connection_params: dict) -> str:
     with psycopg2.connect(**connection_params) as conn:
@@ -111,22 +109,6 @@ def most_diff_salary_by_dep(connection_params: dict) -> list:
     return res
 
 
-class DatabaseWorker(Thread):
-    __lock = Lock()
-
-    def __init__(self, query_name, func, result_queue, connection_params):
-        Thread.__init__(self)
-        self.query_name = query_name
-        self.func = func
-        self.result_queue = result_queue
-        self.connection_params = connection_params
-
-    def run(self):
-        result = None
-        result = self.func(connection_params)
-        self.result_queue[self.query_name] = result
-
-
 connection_params = {
     'host': 'localhost',
     'port': '5431',
@@ -135,32 +117,16 @@ connection_params = {
     'dbname': 'homework'
 }
 
-
-
-result_queue = {}
-worker_1 = DatabaseWorker('hw1', frq_fname_lname, result_queue, connection_params)
-worker_2 = DatabaseWorker('hw2', work_outside_dep_city, result_queue, connection_params)
-worker_3 = DatabaseWorker('hw3', earns_more_than_boss, result_queue, connection_params)
-worker_4 = DatabaseWorker('hw4', highest_salary_dep, result_queue, connection_params)
-worker_5 = DatabaseWorker('hw5', most_diff_salary_by_dep, result_queue, connection_params)
-
 init_time = time()
-worker_1.start()
-worker_2.start()
-worker_3.start()
-worker_4.start()
-worker_5.start()
+results = {
+'hw1': frq_fname_lname(connection_params),
+'hw2': work_outside_dep_city(connection_params),
+'hw3': earns_more_than_boss(connection_params),
+'hw4': highest_salary_dep(connection_params),
+'hw5': most_diff_salary_by_dep(connection_params)
+}
 
-delay = 0.5
-while len(result_queue) < 5:
-    sleep(delay)
-job_done = True
-worker_1.join()
-worker_2.join()
-worker_3.join()
-worker_4.join()
-worker_5.join()
-
-results_json = json.dumps(result_queue, sort_keys=True, indent=4, separators=(',', ':'))
+results_json = json.dumps(results, sort_keys=True, indent=4, separators=(',', ':'))
 print(results_json)
 print('Processing took %s sec' % (time() - init_time))
+

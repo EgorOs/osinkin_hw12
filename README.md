@@ -67,3 +67,39 @@ Stopping background Docker process:
 
     volumes:
       - ./data/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql
+
+### Report
+
+In order to reduce processing time the following improvements were made:
++ Parallelized SQL queries in **4_stat_to_join.py**
++ Table insertions in **3_import_csv.py** replaced with [copying](http://initd.org/psycopg/docs/cursor.html#cursor.copy_from).
+
+##### Import optimization
+
+
+###### 1st attempt [code](https://github.com/EgorOs/osinkin_hw12/blob/master/unoptimized/3_import_csv_v1.py)
+Initially data from csv table has been devided into chunks (of 200k records) and inserted into table via *INSERT INTO employee VALUES(200k records)*.
+
+**Processing time:** 56.86241841316223 sec 
+
+###### 2nd attempt [code](https://github.com/EgorOs/osinkin_hw12/blob/master/unoptimized/3_import_csv_v2.py)
+All the data was [copied](http://initd.org/psycopg/docs/cursor.html#cursor.copy_from) to the temporary table, then fixed and rearranged and the copied into employee table.
+
+**Processing time:** 74.31883716583252 sec 
+
+###### 3rd attempt [code](https://github.com/EgorOs/osinkin_hw12/blob/dfbac5781c3a0267b5d5a9c9d5affeb35d6da8e0/3_import_csv.py)
+In order to rearrange and prepare the data the temporary csv file is created; after all preparations data is copied straight to the employee table.
+
+**Processing time:** 30.66781258583069 sec
+
+#### Queries optimization
+
+In order to speed up queries threading was added, the time comparison is shown in a table below.
+
+ Test    |  1 Thread time, sec  |  5 Threads time, sec  
+ ------  |  ------------------  |  -------------------  
+ 1       |  6.508256435394287   |  8.425762176513672     
+ 2       |  6.007521867752075   |  8.277645587921143   
+ 3       |  6.007717370986938   |  8.546740531921387    
+
+
