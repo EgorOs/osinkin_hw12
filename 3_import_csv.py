@@ -17,7 +17,7 @@ def load_deps(dest: str, connection_params: dict) -> dict:
             dep, city = row.split(',')
             sql = """
             INSERT INTO department(department_id, department_name, 
-            department_city) VALUES (%s, '%s', '%s');"""%(idx, dep, city.strip('\n').upper())
+            department_city) VALUES (%s, '%s', '%s');"""%(idx, dep, city)
             dep_2_id[dep] = idx
             cursor.execute(sql)
             conn.commit()
@@ -74,7 +74,6 @@ def load_employees(dest: str, chunk_size: int, connection_params: dict, dep_2_id
         cursor = conn.cursor()
         # Separate subordinates in chunks and load them
         current_chunk_size = 0
-        dropped_employees = 0
         sql_common = """
         INSERT INTO employee(employee_id, first_name, last_name, 
         employee_department, employee_city, boss, salary) VALUES """
@@ -82,15 +81,10 @@ def load_employees(dest: str, chunk_size: int, connection_params: dict, dep_2_id
         next(f)
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
-            # Verifying that employee not loaded already and
-            # his boss id is valid
-            if em_id not in bosses_ids and boss_id in bosses_ids:
+            if em_id not in bosses_ids:
                 sql_values += """, (%s, '%s', '%s', %s, '%s', %s, %s)""" % (
-                    em_id, fn, ln, dep_2_id[dep], city, boss_id, salary)
+                    em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
                 current_chunk_size += 1
-
-            elif em_id not in bosses_ids and boss_id not in bosses_ids:
-                dropped_employees += 1
 
             if current_chunk_size >= chunk_size:
                 sql = sql_common + sql_values[1::]
@@ -108,9 +102,6 @@ def load_employees(dest: str, chunk_size: int, connection_params: dict, dep_2_id
             conn.commit()
             loaded_records += current_chunk_size
             print('Loaded %s / %s employees' % (loaded_records, total_records))
-
-        if dropped_employees:
-            print('Dropped %s employees due to invalid boss_id' % dropped_employees)
 
 
 connection_params = {
