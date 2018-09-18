@@ -4,6 +4,7 @@ import psycopg2
 import gzip
 import csv
 from time import time
+import os
 
 
 def load_deps(dest: str, connection_params: dict) -> dict:
@@ -26,84 +27,43 @@ def load_deps(dest: str, connection_params: dict) -> dict:
     return dep_2_id
 
 
-def load_employees(dest: str, chunk_size: int, connection_params: dict, dep_2_id: dict):
-    """Fills the employee table, chunk_size parameter defines the number of 
-    employee records loaded per query"""
-    with psycopg2.connect(**connection_params) as conn, gzip.open(dest, mode='rt') as f:
-        cursor = conn.cursor()
+def create_temp_csv(from_dest, name, dep_2_id):
+
+    bosses_ids = {row.split(',')[-2] for row in gzip.open(from_dest, mode='rt')} - {'boss', ''}
+    bosses_added = set()
+    with gzip.open(from_dest, mode='rt') as f, open(name, mode='w', newline='') as f_out:
 
         # Load bosses first to avoid crushes on loading subordinates
-        bosses_ids = set()
-        current_chunk_size = 0
-        sql_common = """
-        INSERT INTO employee(employee_id, first_name, last_name, 
-        employee_department, employee_city, boss, salary) VALUES """
-        sql_values = ''
         next(f)
-        n_subordinates = 0
-        loaded_records = 0
+        writer = csv.writer(f_out, delimiter=',')
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
-            if em_id == boss_id or boss_id == '':
-                sql_values += """, (%s, '%s', '%s', %s, '%s', %s, %s)""" % (
-                    em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
-                current_chunk_size += 1
-                bosses_ids.add(em_id)
-            else:
-                n_subordinates += 1
+            if em_id == boss_id and boss_id != '':
+                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
+                bosses_added.add(em_id)
+            elif boss_id == '':
+                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(em_id), int(salary), city])
+                bosses_added.add(em_id)
 
-            if current_chunk_size >= chunk_size:
-                # remove extra comma from sql_values
-                sql = sql_common + sql_values[1::]
-                cursor.execute(sql)
-                conn.commit()
-                loaded_records += current_chunk_size
-                print('Loaded %s bosses' % loaded_records)
-                current_chunk_size = 0
-                sql_values = ''
 
-        if current_chunk_size != 0:
-            sql = sql_common + sql_values[1::]
-            cursor.execute(sql)
-            conn.commit()
-            loaded_records += current_chunk_size
-            print('Loaded %s bosses' % loaded_records)
+    with gzip.open(from_dest, mode='rt') as f, open(name, mode='a', newline='') as f_out:
 
-        total_records = n_subordinates + len(list(bosses_ids))
-
-    with psycopg2.connect(**connection_params) as conn, gzip.open(dest, mode='rt') as f:
-        cursor = conn.cursor()
-        # Separate subordinates in chunks and load them
-        current_chunk_size = 0
-        sql_common = """
-        INSERT INTO employee(employee_id, first_name, last_name, 
-        employee_department, employee_city, boss, salary) VALUES """
-        sql_values = ''
+        bosses_req = bosses_ids - bosses_added
         next(f)
+        writer = csv.writer(f_out, delimiter=',')
         for row in f:
             em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
-            if em_id not in bosses_ids:
-                sql_values += """, (%s, '%s', '%s', %s, '%s', %s, %s)""" % (
-                    em_id, fn, ln, dep_2_id[dep], city, em_id, salary)
-                current_chunk_size += 1
+            if em_id in bosses_req:
+                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
 
-            if current_chunk_size >= chunk_size:
-                sql = sql_common + sql_values[1::]
-                cursor.execute(sql)
-                conn.commit()
-                loaded_records += current_chunk_size
-                print('Loaded %s / %s employees' % (loaded_records, total_records))
-                current_chunk_size = 0
-                sql_values = ''
+    with gzip.open(from_dest, mode='rt') as f, open(name, mode='a', newline='') as f_out:
 
-        # Commit last unfilled chunk if it exists
-        if current_chunk_size != 0:
-            sql = sql_common + sql_values[1::]
-            cursor.execute(sql)
-            conn.commit()
-            loaded_records += current_chunk_size
-            print('Loaded %s / %s employees' % (loaded_records, total_records))
-
+        next(f)
+        writer = csv.writer(f_out, delimiter=',')
+        for row in f:
+            em_id, fn, ln, dep, city, boss_id, salary = row.split(',')
+            if em_id not in bosses_ids and boss_id != '':
+                writer.writerow([em_id, fn, ln, dep_2_id[dep], int(boss_id), int(salary), city])
 
 connection_params = {
     'host': 'localhost',
@@ -113,73 +73,15 @@ connection_params = {
     'dbname': 'homework'
 }
 
+
 dep_2_id = load_deps('csv/DEPTS.csv', connection_params)
-# load_employees('csv/EMPLOYEE.csv.gz', 200000, connection_params, dep_2_id)
+temp_csv_name = 'tmp.csv'
 
+create_temp_csv('csv/EMPLOYEE.csv.gz', temp_csv_name, dep_2_id)
 
-# https://www.dataquest.io/blog/loading-data-into-postgres/
-# https://stackoverflow.com/questions/30050097/copy-data-from-csv-to-postgresql-using-python
-with psycopg2.connect(**connection_params) as conn, gzip.open('csv/EMPLOYEE.csv.gz', mode='rt') as f:
+with psycopg2.connect(**connection_params) as conn, open('tmp.csv', mode='rt') as f:
     cursor = conn.cursor()
-    cursor.execute("""
-CREATE TABLE test(
-    id integer PRIMARY KEY,
-    fname varchar,
-    lname varchar,
-    emp_dep text,
-    emp_city varchar,
-    boss text,
-    salary integer
-)
-""")
-
-    conn.commit()
-    next(f)
-    cursor.copy_from(f, 'test', sep=',')
+    cursor.copy_from(f, 'employee', sep=',')
     conn.commit()
 
-    sql = """
-UPDATE test
-set boss = case when boss = '' then cast(id as text) else boss end
-where boss = '' """
-    t_start = time()
-    cursor.execute(sql)
-    conn.commit()
-    print('Filled missing values in: %s sec' %(time()-t_start))
-
-    sql = """
-UPDATE test
-set emp_dep = (select department_id from department where emp_dep = department.department_name)"""
-    t_start = time()
-    cursor.execute(sql)
-    conn.commit()
-    print('Numbered departments in: %s sec' %(time()-t_start))
-
-    sql = """
-INSERT into employee(employee_id, first_name, last_name, employee_department, boss, salary, employee_city)
-select id, fname, lname, cast(emp_dep as integer), cast(boss as integer) as boss, salary, emp_city
-from test
-where id in (select cast(boss as integer) from test)"""
-    t_start = time()
-    cursor.execute(sql)
-    conn.commit()
-    print('Inserted bosses in: %s sec' %(time()-t_start))
-
-    sql = """
-    DELETE
-from test
-where id in (select cast(boss as integer) from test)"""
-    t_start = time()
-    cursor.execute(sql)
-    conn.commit()
-    print('Removed bosses from pool in: %s sec' %(time()-t_start))
-
-    sql = """
-INSERT into employee(employee_id, first_name, last_name, employee_department, boss, salary, employee_city)
-SELECT id, fname, lname, cast(emp_dep as integer), cast(boss as integer) as boss, salary, emp_city
-from test
-"""
-    t_start = time()
-    cursor.execute(sql)
-    conn.commit()
-    print('Inserted the rest of employees: %s sec' %(time()-t_start))
+os.remove(temp_csv_name)

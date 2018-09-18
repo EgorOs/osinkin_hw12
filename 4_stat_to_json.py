@@ -11,7 +11,7 @@ def frq_fname_lname(connection_params: dict) -> str:
         SELECT concat(first_name, ' ', last_name) AS paired_names
         FROM employee
         GROUP BY paired_names
-        ORDER BY COUNT(*) DESC
+        ORDER BY COUNT(*) DESC, paired_names
         LIMIT 1;
         """
         cursor.execute(sql)
