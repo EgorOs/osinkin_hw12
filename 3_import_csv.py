@@ -19,7 +19,7 @@ def load_deps(dest: str, connection_params: dict) -> dict:
             dep, city = row.split(',')
             sql = """
             INSERT INTO department(department_id, department_name, 
-            department_city) VALUES (%s, '%s', '%s');"""%(idx, dep, city)
+            department_city) VALUES (%s, '%s', '%s');"""%(idx, dep, city.strip('\n').upper())
             dep_2_id[dep] = idx
             cursor.execute(sql)
             conn.commit()
