@@ -87,7 +87,7 @@ All the data was [copied](http://initd.org/psycopg/docs/cursor.html#cursor.copy_
 
 Processing time: 74.31883716583252 sec. 
 
-#### 3rd attempt [code](https://github.com/EgorOs/osinkin_hw12/blob/dfbac5781c3a0267b5d5a9c9d5affeb35d6da8e0/3_import_csv.py)
+#### 3rd attempt [code](https://github.com/EgorOs/osinkin_hw12/blob/master/3_import_csv.py)
 In order to rearrange and prepare the data the temporary csv file is created; after all preparations data is copied straight to the employee table.
 
 Processing time: 30.66781258583069 sec.
